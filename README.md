@@ -9,5 +9,4 @@ The plot is rendered using a [plotly](https://plotly.com/python/) style that is 
 
 Next up will be timelines and forecasts of the cases and deaths over the coming days, incorporating some basic statistical modelling. 
 
-John Lafferty
 3-20-20
