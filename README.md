@@ -7,4 +7,4 @@ I render the plot using a [plotly](https://plotly.com/python/) style that is ver
 
 Next, I'd like to add timelines and forecasts of the cases and deaths over the coming days, incorporating some basic statistical modelling. 
 
-John Lafferty<br>3-20-20
+3-20-20
