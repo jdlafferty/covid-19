@@ -76,14 +76,14 @@ def render_map(min_cases=1, scale=3.0):
     ))
 
     fig.update_layout(
-            width = 1500,
-            height = 900,
-            margin={"r":0,"t":0,"l":0,"b":0},
-            showlegend = False,
-            geo = dict(
-                scope = 'usa',
-                landcolor = 'rgb(230, 230, 230)',
-            )
+        width = 1500,
+        height = 900,
+        margin={"r":0,"t":0,"l":0,"b":0},
+        showlegend = False,
+        geo = dict(
+            scope = 'usa',
+            landcolor = 'rgb(230, 230, 230)',
+        )
     )
     return(fig)
 
@@ -116,28 +116,26 @@ def render_map_with_address(addr=None, scale=3.0):
     ))
 
     fig.update_layout(
-            width = 1500,
-            height = 900,
-            margin={"r":0,"t":0,"l":0,"b":0},
-            showlegend = False,
-            geo = dict(
-                scope = 'usa',
-                landcolor = 'rgb(230, 230, 230)',
-            )
-    )
-
-    fig.update_layout(
+        width = 1500,
+        height = 900,
+        margin={"r":0,"t":0,"l":0,"b":0},
+        showlegend = False,
+        geo = dict(
+            scope = 'usa',
+            landcolor = 'rgb(230, 230, 230)',
+        ),
         title={
             'text': "Data from The New York Times<br>https://github.com/nytimes/covid-19-data<br>%s" % most_recent_date_long,
             'y':0.05,
             'x':0.80,
             'xanchor': 'left',
             'yanchor': 'bottom'},
-       font=dict(
+        font=dict(
             family="Times New Roman",
             size=8,
             color="#7f7f7f")
     )
+    fig.show(config={'scrollZoom': False})
     return(fig)
 
 # create the map
@@ -152,4 +150,4 @@ app.layout = html.Div([
 
 # start the server
 if __name__ == '__main__':
-    app.run_server(debug = True)
+    app.run_server(debug=True)
