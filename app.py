@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 import json
 import herepy
@@ -118,6 +118,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
+  # TODO: do something with this address
+  print(request.args.get('address'))
   return render_template('index.html', 
                          data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder), 
                          layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder))
