@@ -86,20 +86,22 @@ def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
             ))
         ]
 
+    title_text = "Data from The New York Times<br>github.com/nytimes/covid-19-data<br>%s" % most_recent_date
+
     layout = dict(
         width = 1400,
         height = 800,
         margin={"r":0,"t":0,"l":0,"b":0},
         showlegend = False,
         title = dict(
-            text = '',
-            y = 0.20,
-            x = 0.80,
+            text = title_text,
+            y = 0.05,
+            x = 0.85,
             xanchor = 'left',
             yanchor = 'bottom',
             font=dict(
                 family="Times New Roman",
-                size=14,
+                size=10,
                 color="#7f7f7f"
             )
         ),
@@ -115,11 +117,13 @@ data, layout = prepare_data_layout(df)
 
 # run flask server
 app = Flask(__name__)
+app.debug = True
 
 @app.route('/')
 def index():
   # TODO: do something with this address
-  print(request.args.get('address'))
-  return render_template('index.html', 
-                         data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder), 
+  addr = request.args.get('address')
+  data, layout = prepare_data_layout(df, addr)
+  return render_template('index.html',
+                         data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder),
                          layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder))
