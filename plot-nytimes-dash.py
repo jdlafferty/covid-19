@@ -13,19 +13,6 @@ import dateutil.parser
 
 # initial geocoder and read in NYTimes data
 geocoderApi = herepy.GeocoderApi('VbY-MyI6ZT9U8h-Y5GP5W1YaOzQuvNnL4aSTulNEyEQ')
-df_counties = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv", dtype={"fips": str})
-df_states = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv", dtype={"fips": str})
-
-# determine most recent update
-last_date = max([dateutil.parser.parse(d) for d in np.array(df_counties['date'])])
-most_recent_date = last_date.strftime("%Y-%m-%d")
-most_recent_date_long = last_date.strftime("%A %B %d, %Y")
-print("Most recent data: %s" % most_recent_date_long)
-
-# create data frames
-df_recent = df_counties[df_counties['date']==most_recent_date]
-df_recent = df_recent.sort_values('cases', ascending=False)
-df_recent = df_recent.reset_index().drop('index',1)
 
 def lat_lon_of_address(addr):
     response = geocoderApi.free_form(addr)
@@ -36,7 +23,6 @@ def lat_lon_of_address(addr):
                   res['Response']['View'][0]['Result'][0]['Location']['DisplayPosition']['Longitude'])
     return (lat, lon)
 
-
 def county_state_of_address(addr):
     response = geocoderApi.free_form(addr)
     type(response)
@@ -46,121 +32,111 @@ def county_state_of_address(addr):
     county = res['Response']['View'][0]['Result'][0]['Location']['Address']['AdditionalData'][2]['value']
     return (county, state)
 
-df_geo = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/geo-counties.csv", dtype={"fips": str})
-df_recent = pd.merge(df_recent, df_geo)
+def process_most_recent_data():
+    df_counties = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv", dtype={"fips": str})
+    df_states = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv", dtype={"fips": str})
 
-def render_map(min_cases=1, scale=3.0):
-    df = df_recent
+    # determine most recent update
+    last_date = max([dateutil.parser.parse(d) for d in np.array(df_counties['date'])])
+    most_recent_date = last_date.strftime("%Y-%m-%d")
+    most_recent_date_long = last_date.strftime("%A %B %d, %Y")
+    print("Most recent data: %s" % most_recent_date_long)
 
+    # create data frames
+    df_recent = df_counties[df_counties['date']==most_recent_date]
+    df_recent = df_recent.sort_values('cases', ascending=False)
+    df_recent = df_recent.reset_index().drop('index',1)
+
+    df_geo = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/geo-counties.csv", dtype={"fips": str})
+    df_recent = pd.merge(df_recent, df_geo)
+    return (df_recent, most_recent_date_long)
+
+df, most_recent_date = process_most_recent_data()
+df.head()
+
+def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
     df['text'] = df['county'] + ', ' + df['state'] + '<br>' + \
         (df['cases']).astype(str) + ' cases, ' + (df['deaths']).astype(str) + ' deaths'
-    df_top = df[df['cases'] >= min_cases]
-    df_top = df_top[df_top['county']!='Unknown']
+    df = df[df['cases'] >= min_cases]
+    df = df[df['county']!='Unknown']
+    df['type'] = np.zeros(len(df))
 
-    fig = go.Figure()
 
-    fig.add_trace(go.Scattergeo(
-        locationmode = 'USA-states',
-        lon = df_top['lon'],
-        lat = df_top['lat'],
-        text = df_top['text'],
-        name = '',
-        marker = dict(
-            size = df_top['cases']/scale,
-            color = 'rgba(255, 0, 0, 0.2)',
-            line_color='black',
-            line_width=0.5,
-            sizemode = 'area'
-        ),
-    ))
+    if address != None:
+        this_lat, this_lon = lat_lon_of_address(address)
+        this_county, this_state = county_state_of_address(address)
+        county_record = df[(df['county']==this_county) & (df['state']==this_state)]
+        this_text = '%s<br>County: %s' % (address, np.array(county_record['text'])[0])
+        td = pd.DataFrame(county_record)
+        td['cases'] = [10000]
+        td['text'] = [this_text]
+        td['type'] = [1]
+        df = df.append(td)
 
-    fig.update_layout(
-        width = 1500,
-        height = 900,
+    colors = ['rgba(255,0,0,0.2)', 'rgba(0,255,0,0.2)']
+
+    data = [dict(type = 'scattergeo',
+            locationmode = 'USA-states',
+            lon = df['lon'],
+            lat = df['lat'],
+            text = df['text'],
+            marker = dict(
+                size = df['cases']/scale,
+                color = pd.Series([colors[int(t)] for t in df['type']]),
+                line = dict(width = 0.5, color = 'black'),
+                sizemode = 'area'
+            ))
+        ]
+
+    layout = dict(
+        width = 1400,
+        height = 800,
         margin={"r":0,"t":0,"l":0,"b":0},
         showlegend = False,
+        title = dict(
+            text = '',
+            y = 0.20,
+            x = 0.80,
+            xanchor = 'left',
+            yanchor = 'bottom',
+            font=dict(
+                family="Times New Roman",
+                size=14,
+                color="#7f7f7f"
+            )
+        ),
         geo = dict(
             scope = 'usa',
-            landcolor = 'rgb(230, 230, 230)',
+            showland = True,
+            landcolor = 'rgb(240, 240, 240)'
         )
     )
-    return(fig)
+    return (data, layout)
 
+data, layout = prepare_data_layout(df)
+fig = dict(data=data, layout=layout)
 
-def render_map_with_address(addr=None, scale=3.0):
-    fig = render_map()
-
-    this_lat, this_lon = lat_lon_of_address(addr)
-    this_county, this_state = county_state_of_address(addr)
-    county_record = df_recent[(df_recent['county']==this_county) & (df_recent['state']==this_state)]
-    this_text = '%s<br>County: %s' % (addr, np.array(county_record['text'])[0])
-
-    td = pd.DataFrame()
-    td['lat']=np.array([this_lat])
-    td['lon']=np.array([this_lon])
-    td['text']=np.array([this_text])
-    fig.add_trace(go.Scattergeo(
-        locationmode = 'USA-states',
-        lon = td['lon'],
-        lat = td['lat'],
-        text = td['text'],
-        name = '',
-        marker = dict(
-            size = 100/scale,
-            color = 'rgba(0,255,0,0.2)',
-            line_color='black',
-            line_width=0.5,
-            sizemode = 'area'
-        ),
-    ))
-
-    fig.update_layout(
-        width = 1500,
-        height = 900,
-        margin={"r":0,"t":0,"l":0,"b":0},
-        showlegend = False,
-        geo = dict(
-            scope = 'usa',
-            landcolor = 'rgb(230, 230, 230)',
-        ),
-        title={
-            'text': "Data from The New York Times<br>https://github.com/nytimes/covid-19-data<br>%s" % most_recent_date_long,
-            'y':0.05,
-            'x':0.80,
-            'xanchor': 'left',
-            'yanchor': 'bottom'},
-        font=dict(
-            family="Times New Roman",
-            size=8,
-            color="#7f7f7f")
-    )
-    fig.show(config={'scrollZoom': False})
-    return(fig)
-
-# create the map
-fig = render_map()
-
-# Launch the application and create layout
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.layout = html.Div([
-        html.Label(id='address_label', children='Input address'),
-        dcc.Input(id='input_address', value='Sun Valley', type='text'),
-        html.Button(id='submit_button', type='submit', children='Submit'),
-        dcc.Graph(id='plot', figure=fig),
-        html.Div(id='input_div')
-])
+app.layout  = html.Div(
+    [dcc.Graph(id='graph', figure=fig),
+     html.Div(
+        [dcc.Input(id='input_address', value=None, type='text', maxLength=60, size='50'),
+        html.Button(id='submit-button', type='submit', children='Submit address')],
+        style=dict(display='flex', justifyContent='center'))
+    ]
+)
 
 @app.callback(
-    Output(component_id='plot', component_property='figure'),
-    [Input(component_id='submit_button', component_property='n_clicks')],
+    Output(component_id='graph', component_property='figure'),
+    [Input(component_id='submit-button', component_property='n_clicks')],
     [State(component_id='input_address', component_property='value')],
 )
 def update_output_figure(clicks, input_value):
-    fig = render_map_with_address(input_value)
+    data, layout = prepare_data_layout(df, input_value)
+    fig = dict(data=data, layout=layout)
     return fig
 
-# start the server
 if __name__ == '__main__':
     app.run_server(debug=True)
