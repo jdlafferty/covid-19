@@ -1,8 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
-
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objs as go
 
@@ -139,14 +138,28 @@ def render_map_with_address(addr=None, scale=3.0):
     return(fig)
 
 # create the map
-fig = render_map_with_address('Emerald St, Corpus Christi, TX')
+fig = render_map()
 
 # Launch the application and create layout
-app = dash.Dash()
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
 app.layout = html.Div([
-                # add the plot
-                dcc.Graph(id = 'plot', figure = fig),
-                ])
+        html.Label(id='address_label', children='Input address'),
+        dcc.Input(id='input_address', value='Sun Valley', type='text'),
+        html.Button(id='submit_button', type='submit', children='Submit'),
+        dcc.Graph(id='plot', figure=fig),
+        html.Div(id='input_div')
+])
+
+@app.callback(
+    Output(component_id='plot', component_property='figure'),
+    [Input(component_id='submit_button', component_property='n_clicks')],
+    [State(component_id='input_address', component_property='value')],
+)
+def update_output_figure(clicks, input_value):
+    fig = render_map_with_address(input_value)
+    return fig
 
 # start the server
 if __name__ == '__main__':
