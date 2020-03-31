@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+
+<head>
+</head>
+
+<body>
+  <div id='map'></div>
+</body>
+
+
+<footer>
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <script type="text/javascript">
+    const data = {{data | safe}}
+    const layout = {{layout | safe}}
+
+    Plotly.newPlot('map', data, layout)
+
+  </script>
+</footer>
+
+</html>

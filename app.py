@@ -1,16 +1,13 @@
-import flask
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output, State
-import pandas as pd
-import plotly.graph_objs as go
+from flask import Flask, render_template
 
-import numpy as np
 import json
 import herepy
+import plotly
 import datetime
 import dateutil.parser
+
+import pandas as pd
+import numpy as np
 
 # initial geocoder and read in NYTimes data
 geocoderApi = herepy.GeocoderApi('VbY-MyI6ZT9U8h-Y5GP5W1YaOzQuvNnL4aSTulNEyEQ')
@@ -115,42 +112,12 @@ def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
     return (data, layout)
 
 data, layout = prepare_data_layout(df)
-fig = dict(data=data, layout=layout)
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# run flask server
+app = Flask(__name__)
 
-# Server
-server = flask.Flask(__name__)
-
-@server.route('/')
+@app.route('/')
 def index():
-    return 'Hello Coronavirus'
-
-app = dash.Dash(
-    __name__, 
-    server=server,
-    routes_pathname_prefix='/dash/',
-    external_stylesheets=external_stylesheets
-)
-
-app.layout  = html.Div(
-    [dcc.Graph(id='graph', figure=fig),
-     html.Div(
-        [dcc.Input(id='input_address', value=None, type='text', maxLength=60, size='50'),
-        html.Button(id='submit-button', type='submit', children='Submit address')],
-        style=dict(display='flex', justifyContent='center'))
-    ]
-)
-
-@app.callback(
-    Output(component_id='graph', component_property='figure'),
-    [Input(component_id='submit-button', component_property='n_clicks')],
-    [State(component_id='input_address', component_property='value')],
-)
-def update_output_figure(clicks, input_value):
-    data, layout = prepare_data_layout(df, input_value)
-    fig = dict(data=data, layout=layout)
-    return fig
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
+  return render_template('index.html', 
+                         data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder), 
+                         layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder))
