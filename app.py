@@ -121,7 +121,6 @@ app.debug = True
 
 @app.route('/')
 def index():
-  # TODO: do something with this address
   addr = request.args.get('address')
   data, layout = prepare_data_layout(df, addr)
   return render_template('index.html',
