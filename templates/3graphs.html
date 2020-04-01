@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+
+<head>
+</head>
+
+<body>
+    {% for id in ids %}
+        {{id}}
+        <div id="{{id}}"></div>
+	<br><br>
+    {% endfor %}
+<br>
+  <form action='' method='GET' novalidate>
+    <input type='text' name='address'>
+    <button type='submit'>Go</button>
+  </form>
+
+</body>
+
+
+<footer>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <script type="text/javascript">
+      var graphs = {{graphs_json | safe}};
+      var ids = {{ids | safe}};
+
+       for(var i in graphs) {
+           Plotly.newPlot(ids[i], // the ID of the div, created above
+                       graphs[i].data,
+                       graphs[i].layout, {scrollZoom: false });
+        }
+
+    </script>
+</footer>
+
+</html>
