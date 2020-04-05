@@ -171,7 +171,7 @@ def index():
         options['mark'] = 'unchecked'
 
     if (addr=='') | (addr==None):
-        options['location'] = 'Input address'
+        options['location'] = ''
         print(options)
     else:
         print(addr)
