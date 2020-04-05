@@ -34,7 +34,7 @@ def process_most_recent_data():
     df_counties = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv", dtype={"fips": str})
     df_states = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv", dtype={"fips": str})
     df_geo = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/geo-counties.csv", dtype={"fips": str})
-    df_census = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/data/county_2019_census.csv   ")
+    df_census = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/data/county_2019_census.csv")
 
     last_date = max([dateutil.parser.parse(d) for d in np.array(df_counties['date'])])
     most_recent_date = last_date.strftime("%Y-%m-%d")
