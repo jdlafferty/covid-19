@@ -151,10 +151,6 @@ data, layout = prepare_data_layout(df)
 app = Flask(__name__)
 app.debug = True
 
-@app.route('/about')
-def about():
-    return 'The about face page'
-
 @app.route('/')
 def index():
     addr = request.args.get('address')
