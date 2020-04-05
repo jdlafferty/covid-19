@@ -6,21 +6,22 @@
 
 <body>
   <div id='map'></div>
-  <form style="padding-left:150px" action='' method='GET' novalidate>
-    <input type='text' name='address' placeholder='Input address'>
-    <button type='submit'>Go</button>
+  <form style='padding-left:150px' action='' method='GET' novalidate>
+    <input type='text' name='address' placeholder="{{options.location}}">
+    <button type='submit'>Go</button>&nbsp;
+    <input type='checkbox' id='marker_view' name='marker_view' value='per100k' {{options.mark}}>
+    <label for='100k_view'>per 100,000 people</label>
   </form>
 </body>
 
 
 <footer>
   <!-- Plotly.js -->
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 
-  <script type="text/javascript">
+  <script type='text/javascript'>
     const data = {{data | safe}}
     const layout = {{layout | safe}}
-
     Plotly.newPlot('map', data, layout, { scrollZoom: false })
 
   </script>
