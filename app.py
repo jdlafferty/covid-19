@@ -60,6 +60,22 @@ def process_most_recent_data():
 df, most_recent_date = process_most_recent_data()
 df.head()
 
+def get_location_of_address(addr, df):
+    try:
+        response = geocoderApi.free_form(addr)
+        result = response.as_json_string()
+        res = eval(result)
+        (lat, lon) = (res['Response']['View'][0]['Result'][0]['Location']['DisplayPosition']['Latitude'],
+            res['Response']['View'][0]['Result'][0]['Location']['DisplayPosition']['Longitude'])
+        state = res['Response']['View'][0]['Result'][0]['Location']['Address']['AdditionalData'][1]['value']
+        county = res['Response']['View'][0]['Result'][0]['Location']['Address']['AdditionalData'][2]['value']
+        if df[(df['county']==county) & (df['state']==state)].shape[0] == 0:
+            raise Exception('InvalidStateCounty')
+        return ((lat, lon), (county, state))
+    except:
+        raise Exception('InvalidAddress')
+
+
 def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
     df['text'] = df['county'] + ', ' + df['state'] + '<br>' + \
         (df['cases']).astype(str) + ' cases, ' + (df['deaths']).astype(str) + ' deaths<br>' + \
@@ -68,17 +84,18 @@ def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
     df = df[df['county']!='Unknown']
     df['type'] = np.zeros(len(df))
 
-
     if address != None:
-        this_lat, this_lon = lat_lon_of_address(address)
-        this_county, this_state = county_state_of_address(address)
-        county_record = df[(df['county']==this_county) & (df['state']==this_state)]
-        this_text = '%s<br>County: %s' % (address, np.array(county_record['text'])[0])
-        td = pd.DataFrame(county_record)
-        td['cases'] = [10000]
-        td['text'] = [this_text]
-        td['type'] = [1]
-        df = df.append(td)
+        try:
+            ((this_lat, this_lon), (this_county, this_state)) = get_location_of_address(address, df)
+            county_record = df[(df['county']==this_county) & (df['state']==this_state)]
+            this_text = '%s<br>County: %s' % (address, np.array(county_record['text'])[0])
+            td = pd.DataFrame(county_record)
+            td['cases'] = [10000]
+            td['text'] = [this_text]
+            td['type'] = [1]
+            df = df.append(td)
+        except:
+            print("Invalid address: " + address)
 
     colors = ['rgba(255,0,0,0.2)', 'rgba(0,255,0,0.2)']
 
@@ -130,8 +147,8 @@ app.debug = True
 
 @app.route('/')
 def index():
-  addr = request.args.get('address')
-  data, layout = prepare_data_layout(df, addr)
-  return render_template('index.html',
-                         data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder),
-                         layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder))
+    addr = request.args.get('address')
+    data, layout = prepare_data_layout(df, addr)
+    return render_template('index.html',
+         data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder),
+         layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder))
