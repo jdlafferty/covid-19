@@ -14,7 +14,6 @@ geocoderApi = herepy.GeocoderApi('VbY-MyI6ZT9U8h-Y5GP5W1YaOzQuvNnL4aSTulNEyEQ')
 
 def lat_lon_of_address(addr):
     response = geocoderApi.free_form(addr)
-    type(response)
     result = response.as_json_string()
     res = eval(result)
     (lat, lon) = (res['Response']['View'][0]['Result'][0]['Location']['DisplayPosition']['Latitude'],
@@ -23,7 +22,6 @@ def lat_lon_of_address(addr):
 
 def county_state_of_address(addr):
     response = geocoderApi.free_form(addr)
-    type(response)
     result = response.as_json_string()
     res = eval(result)
     state = res['Response']['View'][0]['Result'][0]['Location']['Address']['AdditionalData'][1]['value']
@@ -76,7 +74,7 @@ def get_location_of_address(addr, df):
         raise Exception('InvalidAddress')
 
 
-def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
+def prepare_data_layout(df, address=None, mark='cases', min_cases=1, scale=3.0):
     df['text'] = df['county'] + ', ' + df['state'] + '<br>' + \
         (df['cases']).astype(str) + ' cases, ' + (df['deaths']).astype(str) + ' deaths<br>' + \
         (df['cases_per_100k']).astype(str) + ' cases per 100k people'
@@ -90,7 +88,11 @@ def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
             county_record = df[(df['county']==this_county) & (df['state']==this_state)]
             this_text = '%s<br>County: %s' % (address, np.array(county_record['text'])[0])
             td = pd.DataFrame(county_record)
-            td['cases'] = [10000]
+            cases = np.array([10000])
+            population = np.array(county_record['population'])
+            td['cases'] = cases
+            cases_per_100k = np.round(100000*np.array(cases/population),1)
+            td['cases_per_100k'] = cases_per_100k
             td['text'] = [this_text]
             td['type'] = [1]
             df = df.append(td)
@@ -98,6 +100,10 @@ def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
             print("Invalid address: " + address)
 
     colors = ['rgba(255,0,0,0.2)', 'rgba(0,255,0,0.2)']
+    if mark=='cases':
+        sizes = df['cases']/scale
+    else:
+        sizes = df['cases_per_100k']/scale
 
     data = [dict(type = 'scattergeo',
             locationmode = 'USA-states',
@@ -105,7 +111,7 @@ def prepare_data_layout(df, address=None, min_cases=1, scale=3.0):
             lat = df['lat'],
             text = df['text'],
             marker = dict(
-                size = df['cases']/scale,
+                size = sizes,
                 color = pd.Series([colors[int(t)] for t in df['type']]),
                 line = dict(width = 0.5, color = 'black'),
                 sizemode = 'area'
@@ -145,10 +151,35 @@ data, layout = prepare_data_layout(df)
 app = Flask(__name__)
 app.debug = True
 
+@app.route('/about')
+def about():
+    return 'The about face page'
+
 @app.route('/')
 def index():
     addr = request.args.get('address')
-    data, layout = prepare_data_layout(df, addr)
+    marker = request.args.get('marker_view')
+
+    options = {}
+    if marker != None:
+        mark = 'cases_per_100k'
+        scale = 1.75
+        options['mark'] = 'checked'
+    else:
+        mark = 'cases'
+        scale = 3.0
+        options['mark'] = 'unchecked'
+
+    if (addr=='') | (addr==None):
+        options['location'] = 'Input address'
+        print(options)
+    else:
+        print(addr)
+        options['location'] = addr
+        print(options)
+
+    data, layout = prepare_data_layout(df, address=addr, mark=mark, scale=scale)
     return render_template('index.html',
          data=json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder),
-         layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder))
+         layout=json.dumps(layout, cls=plotly.utils.PlotlyJSONEncoder),
+         options=options)
