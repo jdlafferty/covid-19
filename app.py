@@ -38,7 +38,7 @@ def process_most_recent_data():
 
     last_date = max([dateutil.parser.parse(d) for d in np.array(df_counties['date'])])
     most_recent_date = last_date.strftime("%Y-%m-%d")
-    most_recent_date_long = last_date.strftime("%A %B %d, %Y")
+    most_recent_date_long = last_date.strftime("%A %B %-d, %Y")
     print("Most recent data: %s" % most_recent_date_long)
 
     df_recent = df_counties[df_counties['date']==most_recent_date]
