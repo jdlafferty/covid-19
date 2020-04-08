@@ -111,37 +111,6 @@ def make_predictions(df, psi):
     return df
 
 
-def plot_cases_for_addr(addr, color='r', alpha=.5, savePath=None, show=False):
-    try:
-        ((lat, lon), (county, state)) = cvd.get_location_of_address(addr, cvd.df_counties)
-        df_county = cvd.df_counties[(cvd.df_counties['county']==county) & ((cvd.df_counties['state']==state))]
-        dates = list(df_county['date'])
-        dates = [dateutil.parser.parse(d) for d in dates]
-        dates = [d.strftime("%B %-d") for d in dates]
-        cases = list(df_county['cases'])
-
-        fig = plt.figure()
-        fig.suptitle('Cases in %s County, %s' % (county, state), fontsize=14)
-        plt.xlabel('')
-        plt.ylabel('')
-        plt.xticks([0, len(cases)/2, len(cases)-1], rotation='horizontal', fontsize=12)
-        plt.bar(x=dates, height=cases, color='r', alpha=alpha)
-
-        if savePath != None:
-            filename = savePath + '/' + "%s, %s.png" % (county, state)
-            plt.savefig(filename, dpi=300)
-
-        if not(show):
-            plt.close(fig)
-        if savePath != None:
-            return filename
-        else:
-            return None
-
-    except Exception as e:
-        print(e)
-
-
 
 def plot_predictions_for_addr(addr, days_back=21, days_ahead=3, color='r', opacity=.6,
                               savePath=None, show=False):
@@ -177,7 +146,7 @@ def plot_predictions_for_addr(addr, days_back=21, days_ahead=3, color='r', opaci
         plt.legend(loc='upper left', frameon=False)
 
         if savePath != None:
-            filename = savePath + '/' + "%s, %s.png" % (county, state)
+            filename = savePath + '/' + "%s,%s.png" % (county, state)
             plt.savefig(filename, dpi=300)
 
         if not(show):

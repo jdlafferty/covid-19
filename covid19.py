@@ -6,6 +6,8 @@ import datetime
 import dateutil.parser
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 # initial geocoder and read in NYTimes data
 geocoderApi = herepy.GeocoderApi('VbY-MyI6ZT9U8h-Y5GP5W1YaOzQuvNnL4aSTulNEyEQ')
@@ -63,6 +65,36 @@ def get_location_of_address(addr, df):
         return ((lat, lon), (county, state))
     except:
         raise Exception('InvalidAddress')
+
+def plot_cases_for_addr(addr, color='r', alpha=.5, savePath=None, show=False):
+    try:
+        ((lat, lon), (county, state)) = get_location_of_address(addr, df_counties)
+        df_county = df_counties[(df_counties['county']==county) & ((df_counties['state']==state))]
+        dates = list(df_county['date'])
+        dates = [dateutil.parser.parse(d) for d in dates]
+        dates = [d.strftime("%B %-d") for d in dates]
+        cases = list(df_county['cases'])
+
+        fig = plt.figure()
+        fig.suptitle('Cases in %s County, %s' % (county, state), fontsize=14)
+        plt.xlabel('')
+        plt.ylabel('')
+        plt.xticks([0, len(cases)/2, len(cases)-1], rotation='horizontal', fontsize=12)
+        plt.bar(x=dates, height=cases, color='r', alpha=alpha)
+
+        if savePath != None:
+            filename = savePath + '/' + "%s,%s.png" % (county, state)
+            plt.savefig(filename, dpi=300)
+
+        if not(show):
+            plt.close(fig)
+        if savePath != None:
+            return filename
+        else:
+            return None
+
+    except Exception as e:
+        print(e)
 
 
 def prepare_data_layout(df, address=None, mark='cases', min_cases=1, scale=3.0):
