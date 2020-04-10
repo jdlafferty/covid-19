@@ -170,6 +170,6 @@ def prepare_data_layout(df, address=None, mark='cases', min_cases=1, scale=3.0):
 
 df_counties = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv", dtype={"fips": str})
 df_states = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv", dtype={"fips": str})
-df_geo = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/geo-counties.csv", dtype={"fips": str})
+df_geo = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/data/geo-counties.csv", dtype={"fips": str})
 df_census = pd.read_csv("https://raw.githubusercontent.com/jdlafferty/covid-19/master/data/county_2019_census.csv")
 df, most_recent_date = process_most_recent_data()
