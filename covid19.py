@@ -51,6 +51,29 @@ def process_most_recent_data():
     return (df_recent, most_recent_date_long)
 
 
+def process_data(date_str):
+    date = dateutil.parser.parse(date_str)
+    this_date = date.strftime("%Y-%m-%d")
+    this_date_long = date.strftime("%A %B %-d, %Y")
+    print("covid19: Processing NY Times data for %s" % this_date_long)
+
+    df_recent = df_counties[df_counties['date']==this_date]
+    df_recent = df_recent.sort_values('cases', ascending=False)
+    df_recent = df_recent.reset_index().drop('index',1)
+
+    df_recent = pd.merge(df_recent, df_geo)
+    df_recent = pd.merge(df_recent, df_census, how='left', on=['county','state'])
+    df_recent = df_recent[df_recent['county'] != 'Unknown']
+    df_recent['population'] = np.array(df_recent['population'], dtype='int')
+
+    cases = np.array(df_recent['cases'])
+    population = np.array(df_recent['population'])
+    cases_per_100k = np.round(100000*np.array(cases/population),1)
+    df_recent['cases_per_100k'] = cases_per_100k
+
+    return (df_recent, this_date, this_date_long)
+
+
 def get_location_of_address(addr, df):
     try:
         response = geocoderApi.free_form(addr)
