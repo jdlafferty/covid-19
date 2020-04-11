@@ -53,15 +53,14 @@ def compute_deltas(df, days_back=30):
 def initialize_for_simulation(df_delta):
     print('covid19_predict: initializing for simulation')
     df = df_delta.drop(['lat', 'lon', 'fips'], axis=1)
-    df_nonzero = df[df['delta'] > 0]
-    df = pd.DataFrame(df_nonzero)
+    df = df[df['delta'] > 0]
+    df = pd.DataFrame(df)
     df['z'] = np.log(np.array(df['delta'])/1e5) - np.log(1-np.array(df['delta'])/1e5)
     df['psi'] = df['z']
-    df['var'] = 1/(np.array(df['delta'])*(1-np.array(df['delta']/1e5)))
+    df['var'] = 1/(np.array(df['delta'])*(1-np.array(df['delta'])/1e5))
     df['d'] = 1/(1+1/np.array(df['var']))
     df = df.reset_index().drop('index', 1)
     return df
-
 
 def run_gibbs_sampler(df, B=10000, burn=1000):
     k = df.shape[0]
@@ -159,7 +158,6 @@ def plot_predictions_for_addr(addr, days_back=21, days_ahead=3, color='r', opaci
 
     except Exception as e:
         print(e)
-
 
 df_recent, recent_date = process_recent_data(days_back=7)
 df_delta = compute_deltas(df_recent, days_back=3)
