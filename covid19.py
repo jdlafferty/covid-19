@@ -54,7 +54,7 @@ def process_most_recent_data():
 def process_data(date_str):
     date = dateutil.parser.parse(date_str)
     this_date = date.strftime("%Y-%m-%d")
-    this_date_long = date.strftime("%A %B %-d, %Y")
+    this_date_long = date.strftime("%B %-d, %Y")
     print("covid19: Processing NY Times data for %s" % this_date_long)
 
     df_recent = df_counties[df_counties['date']==this_date]
