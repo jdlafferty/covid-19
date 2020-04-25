@@ -145,7 +145,7 @@ def prepare_data_layout(df, address=None, mark='cases', min_cases=1, scale=3.0):
     )
     return (data, layout)
 
-data, layout = prepare_data_layout(df)
+data, layout = prepare_data_layout(df, mark='cases_per_100k', scale=1.75)
 
 # run flask server
 app = Flask(__name__)
@@ -157,14 +157,14 @@ def index():
     marker = request.args.get('marker_view')
 
     options = {}
-    if marker != None:
-        mark = 'cases_per_100k'
-        scale = 1.75
-        options['mark'] = 'checked'
-    else:
+    if marker == 'cases':
         mark = 'cases'
         scale = 3.0
         options['mark'] = 'unchecked'
+    else:
+        mark = 'cases_per_100k'
+        scale = 1.75
+        options['mark'] = 'checked'
 
     if (addr=='') | (addr==None):
         options['location'] = ''
